@@ -23,7 +23,7 @@ R3 = 0.005;
 % Density
 rho_metal = 7000;
 rho_f = 1000;
-rho = rho_metal - rho_f;
+ho = rho_metal - rho_f;
 
 % Rod radius
 r0 = 0.001;
@@ -45,7 +45,7 @@ ne = N - 1; % Number of edges
 EI = Y * pi * r0^4 / 4;
 EA = Y * pi * r0^2;
 
-% Geometry
+% Geometry: for initial condition 
 nodes = zeros(N, 2);
 for c = 1:N
     nodes(c,1) = (c-1) * deltaL;
@@ -73,7 +73,7 @@ C(4,4) = C2;
 C(5,5) = C3;
 C(6,6) = C3;
 
-% Gravity
+% Gravity (only for y direction) 
 W = zeros(2*N,1);
 W(2) = -4/3*pi*R1^3*rho*g;
 W(4) = -4/3*pi*R2^3*rho*g;
