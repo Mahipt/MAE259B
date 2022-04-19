@@ -12,9 +12,9 @@ rho_metal = 7000; % Density of metal spehere
 rho_fluid = 1000; % Density of the fluid  
 rho = rho_metal - rho_fluid; % Relative Density of the sphere
 
-R1 = 0.025; % Radius of sphere 1 
+R1 = 0.005; % Radius of sphere 1 
 R2 = 0.025; % Radius of sphere 2
-R3 = 0.025; % Radius of sphere 3 
+R3 = 0.005; % Radius of sphere 3 
 RodLength = 0.1;  % Total rod length 
 deltaL = RodLength / (N - 1); % Rod length in each section 
 r0 = 0.001; % Rod radius
@@ -49,7 +49,7 @@ W(6) = -4/3*pi*R3^3*rho*g;
 
 % Time step size 
 totalTime = 10; 
-dt = 0.001; 
+dt = 0.01; 
 
 % Utility quantities 
 Y = 1e9; % Young's modulus
