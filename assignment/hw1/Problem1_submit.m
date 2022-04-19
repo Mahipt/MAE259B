@@ -135,6 +135,7 @@ for i = 2:Nsteps
         
         % Weight
         f = f - W;
+        tempt = J \ f
         
         % Update
         q = q - J \ f;

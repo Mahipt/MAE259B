@@ -1,14 +1,14 @@
-close all; clear; clc; 
+ close all; clear; clc; 
 
 %% Global variables
 
 %% Physical parameters
 % Number of vertices (must be an odd number) 
-N = 5;
+N = 21;
 
 % Time step size
 % Total time
-totalTime = 10; % seconds
+totalTime = 50; % seconds
 dt = 0.01; % second
 
 % Rod length
@@ -60,8 +60,8 @@ end
 % Viscous damping matrix
 C = zeros(2 * N, 2 * N); 
 for i = 1:N % Assign value to the diagonal matrix
-	C(2 * i - 1, 2 * i - 1) = 6 * pi * visc * R(i)^3; 
-	C(2 * i, 2 * i) = 6 * pi * visc * R(i)^3; 
+	C(2 * i - 1, 2 * i - 1) = 6 * pi * visc * R(i); 
+	C(2 * i, 2 * i) = 6 * pi * visc * R(i); 
 end 
 
 % Gravity
@@ -73,8 +73,8 @@ end
 % Initial DOF vector
 q0 = zeros(2 * N, 1);
 for i = 1:N
-    q0 ( 2 * i - 1 ) = deltaL * (i - 1);% x coordinate
-    q0 ( 2 * i ) = 0; % y coordinate
+    q0 (2 * i - 1) = deltaL * (i - 1);% x coordinate
+    q0 (2 * i) = 0; % y coordinate
 end
 
 % New position and velocity
@@ -93,7 +93,7 @@ all_mid_v(1) = u((N + 1));
 tol = EI / RodLength^2 * 1e-3;
 
 % Time marching scheme
-for i = 2:Nsteps 
+for c = 2:Nsteps 
     %fprintf('Time = %f\n', (i - 1) * dt );
     
     q = q0; % Guess
@@ -104,47 +104,49 @@ for i = 2:Nsteps
         f = M / dt * ( (q-q0) / dt - u );
         J = M / dt^2;
         
-    	for j = 2:N
-    		xk = q(2 * (j - 1) - 1); 
-    		yk = q(2 * (j - 1)); 
-    		xkp1 = q(2 * j - 1); 
-    		ykp1 = q(2 * j); 
-    		dF = gradEs(xk, yk, xkp1, ykp1, deltaL, EA); 
-    		dJ = hessEs(xk, yk, xkp1, ykp1, deltaL, EA); 
+    	for k = 2:N
+    		xk = q(2 * (k - 1) - 1); 
+    		yk = q(2 * (k - 1)); 
+    		xkp1 = q(2 * k - 1); 
+    		ykp1 = q(2 * k); 
+    		dF = gradEs(xk, yk, xkp1, ykp1, deltaL, EA);
+    		dJ = hessEs(xk, yk, xkp1, ykp1, deltaL, EA);
 
-    		bg = 2 * (j - 1) - 1; % begin
-    		fl = 2 * j; % end 
-    		f(bg:fl) = f(bg:fl) + dF; 
+    		bg = 2 * (k - 1) - 1; % begin
+    		fl = 2 * k; % end 
+    		f(bg:fl) = f(bg:fl) + dF;
     		J(bg:fl,bg:fl) = J(bg:fl,bg:fl) + dJ;
     	end
-	
-	
-    	for j = 3:N
-    		xkm1 = q((j - 2) * 2 - 1); 
-    		ykm1 = q((j - 2) * 2); 
-    		xk = q((j - 1) * 2 - 1); 
-    		yk = q((j - 1) * 2); 
-    		xkp1 = q(2 * j - 1); 
-    		ykp1 = q(2 * j); 
+
+	   
+    	for k = 3:N
+    		xkm1 = q((k - 2) * 2 - 1); 
+    		ykm1 = q((k - 2) * 2); 
+    		xk = q((k - 1) * 2 - 1); 
+    		yk = q((k - 1) * 2); 
+    		xkp1 = q(2 * k - 1); 
+    		ykp1 = q(2 * k); 
             curvature0 = 0;
             dF = gradEb(xkm1, ykm1, xk, yk, xkp1, ykp1, ...
                 curvature0, deltaL, EI);
            	dJ = hessEb(xkm1, ykm1, xk, yk, xkp1, ykp1, ...
                 curvature0, deltaL, EI);
 
-    		bg = 2 * (j - 2) - 1;% start 
-    		fl = 2 * j; % end
+    		bg = 2 * (k - 2) - 1; % start 
+    		fl = 2 * k; % end
             f(bg:fl) = f(bg:fl) + dF;
             J(bg:fl,bg:fl) = J(bg:fl,bg:fl) + dJ;
     	end
+    
 	        
         % Viscous force
         f = f + C * ( q - q0 ) / dt;
         J = J + C / dt;
         
         % Weight
-        f = f - W
-        
+        f = f - W;   
+
+        %tempt = J \ f  
         % Update
         q = q - J \ f;
         
@@ -161,8 +163,8 @@ for i = 2:Nsteps
     drawnow
     
     % Store
-    all_mid_y(i) = q((N + 1) / 2 * 2);
-    all_mid_v(i) = u((N + 1) / 2 * 2);
+    all_mid_y(c) = q((N + 1));
+    all_mid_v(c) = u((N + 1));
 end
 
 figure(2);
