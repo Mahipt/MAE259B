@@ -21,7 +21,7 @@ R2 = 0.025;
 R3 = 0.005;
 
 % Density
-rho_metal = 7000;
+rho_metl = 7000;
 rho_f = 1000;
 ho = rho_metal - rho_f;
 
@@ -97,7 +97,6 @@ all_mid_v = zeros( Nsteps, 1); % y-velocity of R2
 
 all_mid_y(1) = q(4);
 all_mid_v(1) = u(4);
-
 % Tolerance
 tol = EI / RodLength^2 * 1e-3;
 
@@ -117,7 +116,7 @@ for c=2:Nsteps
         
         %
         % Elastic forces
-        %
+        
         % Linear spring 1 between nodes 1 and 2
         xk = q(1);
         yk = q(2);
