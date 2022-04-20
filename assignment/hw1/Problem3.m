@@ -56,7 +56,7 @@ all_y(1,:) = q(2:2:end);
 all_v(1,:) = u(2:2:end); 
 
 f_applyPoint = round(0.75 / (BeamLength / (N - 1)));
-force = 2000; 
+force = 20000; 
 
 % Tolerance
 tol = EI / BeamLength^2 * 1e-3;
@@ -68,7 +68,7 @@ for c = 2:Nsteps
     fprintf('Steps = %f\n', (c - 1) ); 
 
     q = q0; % Guess
-    q_update = q(free_index); 
+    q_free = q(free_index); 
     % Newton Raphson
     err = 10 * tol;
     while err > tol
@@ -76,9 +76,9 @@ for c = 2:Nsteps
         f = M / dt * ( (q-q0) / dt - u );
         J = M / dt^2;
         
-        f(f_applyPoint * 2) = f(f_applyPoint * 2) - force; 
+        f(f_applyPoint * 2) = f(f_applyPoint * 2) + force; 
 
-        for k = 2:(N - 1)
+        for k = 2:N 
             xk = q(2 * (k - 1) - 1); 
             yk = q(2 * (k - 1)); 
             xkp1 = q(2 * k - 1); 
@@ -88,14 +88,13 @@ for c = 2:Nsteps
 
             bg = 2 * (k - 1) - 1; % begin
             fl = 2 * k; % end 
-
             f(bg:fl) = f(bg:fl) + dF;
             J(bg:fl,bg:fl) = J(bg:fl,bg:fl) + dJ;
         end
 
 
        
-        for k = 3:(N - 1)
+        for k = 3:N
             xkm1 = q((k - 2) * 2 - 1); 
             ykm1 = q((k - 2) * 2); 
             xk = q((k - 1) * 2 - 1); 
@@ -116,11 +115,11 @@ for c = 2:Nsteps
         
         f = f - W; 
         % Update (make sure both end-points = 0)
-        f_update = f(free_index); 
-        J_update = J(free_index, free_index); 
-        q_update = q_update - J_update \ f_update; 
+        f_free = f(free_index); 
+        J_free = J(free_index, free_index); 
+        q_free = q_free - J_free \ f_free; 
 
-        q(free_index) = q_update;
+        q(free_index) = q_free;
         
         err = sum( abs(f(free_index)) );
     end
