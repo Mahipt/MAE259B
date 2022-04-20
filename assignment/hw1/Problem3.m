@@ -23,9 +23,10 @@ EI = Y * pi * (R_outer^4 - R_inner^4) / 4;
 EA = Y * pi * (R_outer^2 - R_inner^2);
 
 % Mass matrix
+mass = pi*(R_outer^2 - R_inner^2)*deltaL*rho_alum;
 M = zeros(2 * N, 2 * N); 
 for i = 1:N % Assign value to the diagonal matrix
-    mass = pi*(R_outer^2 - R_inner^2)*BeamLength*rho_alum/(N - 1); 
+    mass = pi*(R_outer^2 - R_inner^2)*deltaL*rho_alum; 
     M(2 * i - 1, 2 * i - 1) = mass; 
     M(2 * i, 2 * i) = mass; 
 end 
@@ -33,7 +34,7 @@ end
 % Gravity (only on y direction)
 W = zeros(2 * N, 1);
 for i = 1:N 
-    W(2 * i) = M(2 * i, 2 * i);  
+    W(2 * i) = mass * g;  
 end 
 
 % Initial DOF vector
@@ -55,7 +56,7 @@ all_y(1,:) = q(2:2:end);
 all_v(1,:) = u(2:2:end); 
 
 f_applyPoint = round(0.75 / (BeamLength / (N - 1)));
-force = -2000; 
+force = 2000; 
 
 % Tolerance
 tol = EI / BeamLength^2 * 1e-3;
@@ -64,8 +65,8 @@ free_index = [3:(N*2 - 1)];
 
 % Time marching scheme
 for c = 2:Nsteps 
-    fprintf('Steps = %f\n', (c - 1) );
-    
+    fprintf('Steps = %f\n', (c - 1) ); 
+
     q = q0; % Guess
     q_update = q(free_index); 
     % Newton Raphson
@@ -75,7 +76,7 @@ for c = 2:Nsteps
         f = M / dt * ( (q-q0) / dt - u );
         J = M / dt^2;
         
-        f(f_applyPoint) = f(f_applyPoint) + force; 
+        f(f_applyPoint * 2) = f(f_applyPoint * 2) - force; 
 
         for k = 2:(N - 1)
             xk = q(2 * (k - 1) - 1); 
