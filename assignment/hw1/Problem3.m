@@ -60,11 +60,14 @@ force = -2000;
 % Tolerance
 tol = EI / BeamLength^2 * 1e-3;
 
+free_index = [3:(N*2 - 1)]; 
+
 % Time marching scheme
 for c = 2:Nsteps 
-    %fprintf('Time = %f\n', (c - 1) * dt );
+    fprintf('Steps = %f\n', (c - 1) );
     
     q = q0; % Guess
+    q_update = q(free_index); 
     % Newton Raphson
     err = 10 * tol;
     while err > tol
@@ -88,10 +91,6 @@ for c = 2:Nsteps
             f(bg:fl) = f(bg:fl) + dF;
             J(bg:fl,bg:fl) = J(bg:fl,bg:fl) + dJ;
         end
-        f(1:2) = 0; 
-        f((N * 2 - 1):(N * 2)) = 0; 
-        J(1:2, 1:2) = 0; 
-        J((N * 2 - 1):(N * 2), (N * 2 - 1):(N * 2)) = 0; 
 
 
        
@@ -113,26 +112,16 @@ for c = 2:Nsteps
             f(bg:fl) = f(bg:fl) + dF;
             J(bg:fl,bg:fl) = J(bg:fl,bg:fl) + dJ;
         end
-        f(1:2) = 0; 
-        f((N * 2 - 1):(N * 2)) = 0; 
-        J(1:2, 1:2) = 0; 
-        J((N * 2 - 1):(N * 2), (N * 2 - 1):(N * 2)) = 0; 
         
-        % Weight
-        f = f - W;  
-        f(1:2) = 0; 
-        f((N * 2 - 1):(N * 2)) = 0; 
-        J(1:2, 1:2) = 0; 
-        J((N * 2 - 1):(N * 2), (N * 2 - 1):(N * 2)) = 0; 
- 
+        f = f - W; 
         % Update (make sure both end-points = 0)
-        q_update = J() \ f; 
-        %q_update(1:2) = 0; 
-        %q_update(2*N - 1:2*N) = 0; 
+        f_update = f(free_index); 
+        J_update = J(free_index, free_index); 
+        q_update = q_update - J_update \ f_update; 
 
-        q = q - q_update;
+        q(free_index) = q_update;
         
-        err = sum( abs(f) );
+        err = sum( abs(f(free_index)) );
     end
 
     % Update
@@ -151,10 +140,10 @@ for c = 2:Nsteps
     all_mid_v(c,:) = u(2:2:end);
 end
 
-%{
+
 figure(2);
 timeArray = (1:Nsteps) * dt;
-plot(timeArray, all_mid_v, 'k-');
+plot(timeArray, all_mid_v(), 'k-');
 xlabel('Time, t [sec]');
 ylabel('Velocity of mid-node, v [meter/sec]');
 
@@ -164,7 +153,7 @@ timeArray = (1:Nsteps) * dt;
 plot(timeArray, all_mid_y, 'k-');
 xlabel('Time, t [sec]');
 ylabel('Positio of mid-node, y[meter]');
-%}
+
 
 
 
