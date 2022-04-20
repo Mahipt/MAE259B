@@ -65,7 +65,7 @@ free_index = [3:(N*2 - 1)];
 
 force_vs_ymax = zeros(10, 2);
 
-for j = 1:11
+for j = 1:100
     force = 2000 + 1000 * (j - 1); 
     fprintf('Force = %f\n', force);
     % Time marching scheme
@@ -151,9 +151,10 @@ end
 
 
 figure(2);
-plot(force_vs_ymax(j,1), force_vs_ymax(j,2), 'k-');
-xlabel('Force, [N]');
+plot(force_vs_ymax(:,1) / 1000, force_vs_ymax(:,2), 'k-');
+xlabel('Force, [1000 N]');
 ylabel('Y Max, [Meters]');
+axis equal
 
 
 
