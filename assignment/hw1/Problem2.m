@@ -3,8 +3,8 @@ close all; clear; clc;
 
 vel_timeStep = zeros(19, 2); 
 
-for j = 1:5
-    fprintf('Node = %f\n', 0.1^j);
+for j = 1:4
+    fprintf('Time Steps = %f\n', 0.1^j);
     %% Global variables
 
     %% Physical parameters
