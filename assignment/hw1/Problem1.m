@@ -1,59 +1,27 @@
 close all; clear; clc; 
 
-%% Global variables
 
-%% Physical parameters
-% Number of vertices
-N = 3;
+%% Global Variables 
+% Physical Parameters
+g = 9.8; % Gravity 
+visc = 1000; % Viscosity (Pa-S) 
 
-% Time step size
-dt = 0.01; % second
+N = 3; % Number of vertice 
 
-% Rod length
-RodLength = 0.1; % meter
+rho_metal = 7000; % Density of metal spehere 
+rho_fluid = 1000; % Density of the fluid  
+rho = rho_metal - rho_fluid; % Relative Density of the sphere
 
-% Discrete length
-deltaL = RodLength / (N-1);
+R1 = 0.005; % Radius of sphere 1 
+R2 = 0.025; % Radius of sphere 2
+R3 = 0.005; % Radius of sphere 3 
+RodLength = 0.1;  % Total rod length 
+deltaL = RodLength / (N - 1); % Rod length in each section 
+r0 = 0.001; % Rod radius
 
-% Radius of spheres
-R1 = 0.005;
-R2 = 0.025;
-R3 = 0.005;
-
-% Density
-rho_metl = 7000;
-rho_f = 1000;
-ho = rho_metal - rho_f;
-
-% Rod radius
-r0 = 0.001;
-
-% Young's modulus
-Y = 1e9; % Using Y instead of E to avoid ambiguity
-
-% Gravity
-g = 9.8; % m/s^2
-
-% Viscosity
-visc = 1000; % Pa-s
-
-% Total time
-totalTime = 10; % seconds
-
-% Utility quantities
-ne = N - 1; % Number of edges
-EI = Y * pi * r0^4 / 4;
-EA = Y * pi * r0^2;
-
-% Geometry: for initial condition 
-nodes = zeros(N, 2);
-for c = 1:N
-    nodes(c,1) = (c-1) * deltaL;
-%     nodes(c,2) = 0;
-end
-
-% Mass matrix
-M = zeros(2*N,2*N);
+% pre-cal parameters
+% Mass matrix 
+M = zeros(N * 2, N * 2); % 2 DOF for x and y
 M(1,1) = 4/3*pi*R1^3*rho_metal;
 M(2,2) = 4/3*pi*R1^3*rho_metal;
 M(3,3) = 4/3*pi*R2^3*rho_metal;
@@ -61,8 +29,8 @@ M(4,4) = 4/3*pi*R2^3*rho_metal;
 M(5,5) = 4/3*pi*R3^3*rho_metal;
 M(6,6) = 4/3*pi*R3^3*rho_metal;
 
-% Viscous damping matrix
-C = zeros(6,6);
+% Viscous damping matrix 
+C = zeros(N * 2, N * 2); % viscosity
 C1 = 6*pi*visc*R1;
 C2 = 6*pi*visc*R2;
 C3 = 6*pi*visc*R3;
@@ -74,49 +42,58 @@ C(5,5) = C3;
 C(6,6) = C3;
 
 % Gravity (only for y direction) 
-W = zeros(2*N,1);
+W = zeros(N * 2, 1); 
 W(2) = -4/3*pi*R1^3*rho*g;
 W(4) = -4/3*pi*R2^3*rho*g;
 W(6) = -4/3*pi*R3^3*rho*g;
 
-% Initial DOF vector
-q0 = zeros(2*N,1);
-for c=1:N
-    q0 ( 2*c - 1 ) = nodes(c,1); % x coordinate
-    q0 ( 2*c ) = nodes(c,2); % y coordinate
-end
+% Time step size 
+totalTime = 10; 
+dt = 0.01; 
 
-% New position and velocity
-q = q0; % DOF vector
-u = (q - q0) / dt; % Velocity vector
+% Utility quantities 
+Y = 1e9; % Young's modulus
+ne = N - 1; % Number of edges 
+EI = Y * pi * r0^4 / 4; 
+EA = Y * pi * r0^2; 
 
-% Number of time steps
-Nsteps = round( totalTime / dt );
-all_mid_y = zeros( Nsteps, 1); % y-position of R2
-all_mid_v = zeros( Nsteps, 1); % y-velocity of R2
+% Initial Condition and update variable
+q0 = zeros(2 * N, 1);% Initial DOF vector 
+for i = 1:N % Giving q0 the initial value
+	q0(2 * i - 1) = (i - 1) * deltaL;% init x position 
+	q0(2 * i) = 0;% initial y position 
+end 
+q = q0; % DOF vector (initial with init-cond)
+u = (q - q0) / dt; % updated velocity (initial with init-cond) 
+Nsteps = round(totalTime / dt); % Calculate the total steps
 
-all_mid_y(1) = q(4);
-all_mid_v(1) = u(4);
-% Tolerance
-tol = EI / RodLength^2 * 1e-3;
+N_mid = N - 2; % Number of the midpoint
+all_mid_y = zeros(Nsteps, N_mid); 
+all_mid_v = zeros(Nsteps, N_mid); 
+for i = i:N_mid
+	all_mid_y = q((i + 1) * 2); 
+	all_mid_v = u((i + 1) * 2); 
+end 
 
-% Time marching scheme
-for c=2:Nsteps
-    
-    fprintf('Time = %f\n', (c-1) * dt );
-    
-    q = q0; % Guess
-    
-    % Newton Raphson
-    err = 10 * tol;
-    while err > tol
-        % Inertia
-        f = M / dt * ( (q-q0) / dt - u );
-        J = M / dt^2;
-        
-        %
+% Calculation start from here 
+%{ 
+	Calculate effect of each segment in x and y direction, 
+	and update them to the node that it affect directly. 
+%}
+% Hyper-parameter for calculation 
+tol = EI / RodLength^2 * 1e-3; 
+err = 10 * tol; 
+for i = 2:Nsteps
+	% initialize hyper-parameters for each cal in each steps 
+	q = q0; % initial position (from guessing) 
+	err = 10 * tol; % Start with large error 
+	while err > tol % (Newton Raphson) 
+		% Intertia
+		f = M / dt * ((q - q0) / dt - u); % F = m * a
+		J = M / (dt^2); 
+		%
         % Elastic forces
-        
+        %
         % Linear spring 1 between nodes 1 and 2
         xk = q(1);
         yk = q(2);
@@ -158,29 +135,34 @@ for c=2:Nsteps
         
         % Weight
         f = f - W;
+        tempt = J \ f
         
         % Update
         q = q - J \ f;
         
         err = sum( abs(f) );
-    end
+	end 
+	% update 
+	u = (q - q0) / dt; 
+	q0 = q; 
 
-    % Update
-    u = (q - q0) / dt; % Velocity
-    q0 = q; % Old position
-    
-    figure(1);
-    plot( q(1:2:end), q(2:2:end), 'ro-');
-    axis equal
-    drawnow
-    
-    % Store
-    all_mid_y(c) = q(4);
-    all_mid_v(c) = u(4);
-end
+	% Plot position 
+	figure(1); 
+	plot(q(1:2:end), q(2:2:end), 'ro-'); 
+	axis equal; 
+	drawnow; 
+
+	% Store
+	for j = 1:N_mid
+	    all_mid_y(i, j) = q((j + 1) * 2);
+	    all_mid_v(i, j) = u((j + 1) * 2);
+	end
+end 
 
 figure(2);
 timeArray = (1:Nsteps) * dt;
 plot(timeArray, all_mid_v, 'k-');
 xlabel('Time, t [sec]');
 ylabel('Velocity of mid-node, v [meter/sec]');
+
+
