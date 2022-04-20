@@ -9,11 +9,13 @@
 *.user
 *.userosscache
 *.sln.docstates
+*.jpg
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 *.swp 
 **/.DS_Store
+
 
 # User-specific folder 
 courses-material/
