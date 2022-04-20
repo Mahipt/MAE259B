@@ -51,8 +51,8 @@ u = (q - q0) / dt; % Velocity vector
 Nsteps = round( totalTime / dt );
 all_y = zeros(Nsteps, N); % y-position (mid sphere)
 all_v = zeros(Nsteps, N); % y-velocity (mid sphere)
-all_y(1,:) = q; 
-all_v(1,:) = u; 
+all_y(1,:) = q(2:2:end); 
+all_v(1,:) = u(2:2:end); 
 
 f_applyPoint = round(0.75 / (BeamLength / (N - 1)));
 force = -2000; 
@@ -74,7 +74,7 @@ for c = 2:Nsteps
         
         f(f_applyPoint) = f(f_applyPoint) + force; 
 
-        for k = 2:N
+        for k = 2:(N - 1)
             xk = q(2 * (k - 1) - 1); 
             yk = q(2 * (k - 1)); 
             xkp1 = q(2 * k - 1); 
@@ -88,9 +88,14 @@ for c = 2:Nsteps
             f(bg:fl) = f(bg:fl) + dF;
             J(bg:fl,bg:fl) = J(bg:fl,bg:fl) + dJ;
         end
+        f(1:2) = 0; 
+        f((N * 2 - 1):(N * 2)) = 0; 
+        J(1:2, 1:2) = 0; 
+        J((N * 2 - 1):(N * 2), (N * 2 - 1):(N * 2)) = 0; 
+
 
        
-        for k = 3:N
+        for k = 3:(N - 1)
             xkm1 = q((k - 2) * 2 - 1); 
             ykm1 = q((k - 2) * 2); 
             xk = q((k - 1) * 2 - 1); 
@@ -108,21 +113,24 @@ for c = 2:Nsteps
             f(bg:fl) = f(bg:fl) + dF;
             J(bg:fl,bg:fl) = J(bg:fl,bg:fl) + dJ;
         end
-    
-            
-        % Viscous force
-        f = f + C * ( q - q0 ) / dt;
-        J = J + C / dt;
+        f(1:2) = 0; 
+        f((N * 2 - 1):(N * 2)) = 0; 
+        J(1:2, 1:2) = 0; 
+        J((N * 2 - 1):(N * 2), (N * 2 - 1):(N * 2)) = 0; 
         
         % Weight
-        f = f - W;   
+        f = f - W;  
+        f(1:2) = 0; 
+        f((N * 2 - 1):(N * 2)) = 0; 
+        J(1:2, 1:2) = 0; 
+        J((N * 2 - 1):(N * 2), (N * 2 - 1):(N * 2)) = 0; 
  
-        % Update
-        q_update = J \ f; 
-        q_update(1:2) = 0; 
-        q_update(2*N - 1:2*N) = 0; 
+        % Update (make sure both end-points = 0)
+        q_update = J() \ f; 
+        %q_update(1:2) = 0; 
+        %q_update(2*N - 1:2*N) = 0; 
 
-        q = q - J \ f;
+        q = q - q_update;
         
         err = sum( abs(f) );
     end
@@ -133,17 +141,17 @@ for c = 2:Nsteps
     
     
     figure(1);
-    plot( q(1:2:end), q(2:2:end), 'ro-');
+    plot(q(1:2:end), q(2:2:end), 'ro-');
     axis equal
     drawnow
     
     
     % Store
-    all_mid_y(c,:) = q;
-    all_mid_v(c,:) = u;
+    all_mid_y(c,:) = q(2:2:end);
+    all_mid_v(c,:) = u(2:2:end);
 end
 
-
+%{
 figure(2);
 timeArray = (1:Nsteps) * dt;
 plot(timeArray, all_mid_v, 'k-');
@@ -156,7 +164,7 @@ timeArray = (1:Nsteps) * dt;
 plot(timeArray, all_mid_y, 'k-');
 xlabel('Time, t [sec]');
 ylabel('Positio of mid-node, y[meter]');
-
+%}
 
 
 
