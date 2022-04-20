@@ -63,9 +63,9 @@ tol = EI / BeamLength^2 * 1e-3;
 
 free_index = [3:(N*2 - 1)]; 
 
-force_vs_ymax = zeros(10, 2);
+force_vs_ymax = zeros(10, 3);
 
-for j = 1:100
+for j = 1:10
     force = 2000 + 1000 * (j - 1); 
     fprintf('Force = %f\n', force);
     % Time marching scheme
@@ -147,14 +147,32 @@ for j = 1:100
     tempt = -1 * all_mid_y(Nsteps,:); 
     force_vs_ymax(j, 1) = force;
     force_vs_ymax(j, 2) = max(tempt);
+    force_vs_ymax(j, 3) = beams_theory(force, BeamLength, min(BeamLength, BeamLength - 0.75), EI, BeamLength);
 end
 
 
 figure(2);
-plot(force_vs_ymax(:,1) / 1000, force_vs_ymax(:,2), 'k-');
+plot(force_vs_ymax(:,1) / 1000, force_vs_ymax(:,2), 'r-');
 xlabel('Force, [1000 N]');
 ylabel('Y Max, [Meters]');
-axis equal
+hold on; 
+plot(force_vs_ymax(:,1) / 1000, force_vs_ymax(:,3), 'b-');
+
+
+
+function ymax = beams_theory(P, L, c, EI, l)
+    ymax = (P*c*(L^2 - c^2)^1.5) / (9*sqrt(3)*EI*l);
+end
+
+
+
+
+
+
+
+
+
+
 
 
 
